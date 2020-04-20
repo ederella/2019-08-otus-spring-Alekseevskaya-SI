@@ -36,26 +36,19 @@ public class Config {
     public PollerMetadata poller () {
         return Pollers.fixedRate(100).maxMessagesPerPoll(2).get() ;
     }
+
 	@Bean
 	public IntegrationFlow flow() {
-	     return IntegrationFlows.from("ordersChannel")
-	                .split()
-	                .<Order, String> route (order -> order.getPredictionType().toString(), 
-	                						mapping -> mapping
-	                								 .subFlowMapping(PredictionType.BUSINESS.toString(), 
-	                										sf -> sf.handle("businessFortuneGenerator", "generatePrediction"))
-	                								 .subFlowMapping(PredictionType.HEALTH.toString(), 
-	    	                								sf -> sf.handle("healthFortuneGenerator", "generatePrediction"))
-	                								 .subFlowMapping(PredictionType.LOVE.toString(), 
-	                										sf -> sf.handle("loveFortuneGenerator", "generatePrediction"))
-	                								 .defaultSubFlowMapping(
-	                										sf -> sf.handle("defaultFortuneGenerator", "generatePrediction"))
-	                						)
-	                .aggregate()
-	                .transform(Transformers.toJson())
-	                .handle("fileServices", "save")
-					.transform(Transformers.fromJson())
-	                .channel("predictionsChannel")
-	                .get();
-	    }
+		return IntegrationFlows.from("ordersChannel").split()
+				.<Order, String>route(order -> order.getPredictionType().toString(), mapping -> mapping
+						.subFlowMapping(PredictionType.BUSINESS.toString(),
+								sf -> sf.handle("businessFortuneGenerator", "generatePrediction"))
+						.subFlowMapping(PredictionType.HEALTH.toString(),
+								sf -> sf.handle("healthFortuneGenerator", "generatePrediction"))
+						.subFlowMapping(PredictionType.LOVE.toString(),
+								sf -> sf.handle("loveFortuneGenerator", "generatePrediction"))
+						.defaultSubFlowMapping(sf -> sf.handle("defaultFortuneGenerator", "generatePrediction")))
+				.aggregate().transform(Transformers.toJson()).handle("fileServices", "save")
+				.transform(Transformers.fromJson()).channel("predictionsChannel").get();
+	}
 }
